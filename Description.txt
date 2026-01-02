@@ -127,4 +127,8 @@ It offers live prediction as you type.
 It has built-in image analysis.
 It's open-source and local (it doesn't send your data to external servers, and you can develop it however you like).
 
+
 So, it's not the "first" tool, but it's smarter and more personalized than most on the market, especially since it's yours and free.
+Designed on July 10, 2025 by Rashed Dadouch .
+Mobile : +9630943307057 .
+Email : rasheddadou@Gmail.com .
