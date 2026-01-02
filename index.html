@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompt Assistant</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --text: #212529;
+            --primary: #0d6efd;
+            --primary-hover: #0b5ed7;
+            --secondary: #6c757d;
+            --card-bg: #ffffff;
+            --border: #dee2e6;
+            --success: #d1e7dd;
+            --danger: #f8d7da;
+            --warning: #fff3cd;
+        }
+        body.dark {
+            --bg: #121212;
+            --text: #e9ecef;
+            --card-bg: #1e1e1e;
+            --border: #343a40;
+            --primary: #0d6efd;
+            --primary-hover: #0b5ed7;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        header {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+        .toggle-theme {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .main-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        #prompt-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        #prompt-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13,110,253,0.25);
+        }
+        .suggestions {
+            margin: 1rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .suggestion-btn {
+            padding: 0.5rem 1rem;
+            background: var(--warning);
+            color: #856404;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .suggestion-btn:hover {
+            background: #ffeaa7;
+        }
+        .suggestion-btn.selected {
+            background: var(--success);
+            color: #155724;
+        }
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        button.primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            flex: 1;
+        }
+        button.primary:hover {
+            background: var(--primary-hover);
+        }
+        #enhanced-preview {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #e9ecef;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        body.dark #enhanced-preview {
+            background: #2d2d2d;
+        }
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .history-card, .image-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+        .history-card h2, .image-card h2 {
+            margin-top: 0;
+            font-size: 1.4rem;
+            color: var(--primary);
+        }
+        #history-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .history-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .history-item:hover {
+            background: var(--bg);
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .history-prompt {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        .history-time {
+            font-size: 0.8rem;
+            color: var(--secondary);
+        }
+        #image-upload {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+        }
+        #image-analysis {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--warning);
+            border-radius: 8px;
+            display: none;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>AI Prompt Assistant</h1>
+        <button class="toggle-theme" id="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+    </header>
+
+    <div class="container">
+        <div class="main-card">
+            <label for="prompt-input">Your Prompt</label>
+            <textarea id="prompt-input" placeholder="Type your image prompt here... e.g. A military helicopter in a desert"></textarea>
+
+            <div class="suggestions" id="suggestions"></div>
+
+            <div class="actions">
+                <button class="primary" id="enhance-btn">Enhance Prompt</button>
+            </div>
+
+            <div id="enhanced-preview">
+                The enhanced prompt will appear here after you click "Enhance Prompt"...
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="history-card">
+                <h2>History</h2>
+                <div id="history-list">
+                    <p>No history yet. Start enhancing prompts!</p>
+                </div>
+            </div>
+
+            <div class="image-card">
+                <h2>Analyze Image</h2>
+                <input type="file" id="image-upload" accept="image/*">
+                <div id="image-analysis"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        AI Prompt Assistant © 2026 • Built with ❤️ for creators
+    </footer>
+
+    <script>
+        const promptInput = document.getElementById('prompt-input');
+        const suggestionsDiv = document.getElementById('suggestions');
+        const enhanceBtn = document.getElementById('enhance-btn');
+        const enhancedPreview = document.getElementById('enhanced-preview');
+        const historyList = document.getElementById('history-list');
+        const imageUpload = document.getElementById('image-upload');
+        const imageAnalysis = document.getElementById('image-analysis');
+        const themeToggle = document.getElementById('theme-toggle');
+
+        // Dark mode toggle
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            themeToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+        });
+
+        // Load history on start
+        async function loadHistory() {
+            try {
+                const res = await fetch('/history');
+                const history = await res.json();
+                historyList.innerHTML = '';
+                if (history.length === 0) {
+                    historyList.innerHTML = '<p>No history yet. Start enhancing prompts!</p>';
+                    return;
+                }
+                history.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    div.innerHTML = `
+                        <div class="history-prompt">${item.prompt || 'Untitled'}</div>
+                        <div class="history-time">${new Date(item.timestamp).toLocaleString()}</div>
+                    `;
+                    div.onclick = () => {
+                        promptInput.value = item.prompt;
+                        enhancedPreview.textContent = item.enhanced_prompt || item.prompt;
+                    };
+                    historyList.appendChild(div);
+                });
+            } catch (err) {
+                console.error('Failed to load history:', err);
+            }
+        }
+        loadHistory();
+
+        // Live preview while typing
+        promptInput.addEventListener('input', async () => {
+            const prompt = promptInput.value.trim();
+            if (prompt.length < 3) {
+                suggestionsDiv.innerHTML = '';
+                return;
+            }
+
+            try {
+                const res = await fetch('/preview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await res.json();
+                renderSuggestions(data.display_suggestions || []);
+                enhancedPreview.textContent = data.enhanced_prompt || prompt;
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        function renderSuggestions(suggestions) {
+            suggestionsDiv.innerHTML = '';
+            suggestions.forEach(sug => {
+                const btn = document.createElement('button');
+                btn.className = 'suggestion-btn';
+                btn.textContent = sug;
+                btn.onclick = () => btn.classList.toggle('selected');
+                suggestionsDiv.appendChild(btn);
+            });
+        }
+
+        // Enhance button
+        enhanceBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
+            if (!prompt) return;
+
+            const selected = Array.from(document.querySelectorAll('.suggestion-btn.selected')).map(b => b.textContent);
+
+            try {
+                enhanceBtn.disabled = true;
+                enhanceBtn.textContent = 'Enhancing...';
+
+                const res = await fetch('/enhance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await res.json();
+
+                enhancedPreview.textContent = data.enhanced_prompt;
+                loadHistory(); // Refresh history
+            } catch (err) {
+                enhancedPreview.textContent = 'Error: Could not enhance prompt.';
+                console.error(err);
+            } finally {
+                enhanceBtn.disabled = false;
+                enhanceBtn.textContent = 'Enhance Prompt';
+            }
+        });
+
+        // Image analysis
+        imageUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            imageAnalysis.style.display = 'block';
+            imageAnalysis.textContent = 'Analyzing image...';
+
+            try {
+                const res = await fetch('/analyze_image', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                imageAnalysis.textContent = data.notes || 'No analysis available.';
+            } catch (err) {
+                imageAnalysis.textContent = 'Error analyzing image.';
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>

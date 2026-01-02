@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 AI Prompt Assistant Pro - Final Version</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0d1117; color: #c9d1d9; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; }
+        h1 { text-align: center; color: #58a6ff; }
+        textarea, input, button { font-size: 16px; }
+        #promptInput { width: 100%; height: 120px; padding: 15px; background: #161b22; color: #c9d1d9; border: 1px solid #30363d; border-radius: 8px; }
+        #livePreview { margin: 15px 0; padding: 15px; background: #161b22; border-radius: 8px; border-left: 4px solid #58a6ff; }
+        #suggestions { margin: 15px 0; }
+        .suggestion { padding: 10px; background: #21262d; margin: 8px 0; border-radius: 6px; }
+        button { padding: 12px 24px; margin: 8px; background: #238636; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        button:hover { background: #2ea043; }
+        #generateBtn { background: #1f6feb; }
+        #generateBtn:hover { background: #388bfd; }
+        #copyBtn { background: #6f42c1; }
+        #output { margin: 20px 0; padding: 20px; background: #161b22; border-radius: 8px; white-space: pre-wrap; font-size: 17px; }
+        #history, #imageAnalysis { margin-top: 40px; }
+        .history-item { background: #161b22; padding: 15px; margin: 10px 0; border-radius: 8px; border: 1px solid #30363d; }
+        #imageUpload { margin: 20px 0; }
+        #generatedImage { max-width: 100%; margin: 20px 0; border-radius: 10px; border: 2px solid #58a6ff; }
+        .footer { text-align: center; margin-top: 60px; color: #8b949e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 AI Prompt Assistant Pro - Final</h1>
+        <p style="text-align: center;">مساعد ذكي لتحسين الـ Prompts + تحليل صور + تاريخ + توليد</p>
+
+        <textarea id="promptInput" placeholder="اكتب وصفك هنا... مثال: helicopter landing in desert at sunset"></textarea>
+
+        <div id="suggestions"></div>
+        <div id="livePreview"><strong>معاينة حية:</strong><br><span id="previewText"></span></div>
+
+        <div style="text-align: center;">
+            <button id="generateBtn">🚀 توليد الـ Prompt المحسن</button>
+            <button id="copyBtn">📋 نسخ النتيجة</button>
+            <button id="generateImageBtn">🎨 توليد الصورة (SD WebUI)</button>
+        </div>
+
+        <div id="output"></div>
+
+        <!-- تحميل وتحليل صورة -->
+        <div id="imageAnalysis">
+            <h2>📸 تحميل وتحليل صورة مولدة</h2>
+            <input type="file" id="imageUpload" accept="image/*">
+            <button id="analyzeBtn">🔍 تحليل الصورة</button>
+            <div id="analysisResult"></div>
+            <img id="uploadedImage" style="display:none;">
+        </div>
+
+        <!-- عرض التاريخ من SQLite -->
+        <div id="history">
+            <h2>📜 سجل الـ Prompts والصور</h2>
+            <button id="loadHistoryBtn">تحديث السجل</button>
+            <div id="historyList">جاري التحميل...</div>
+        </div>
+
+        <div class="footer">Made with 🔥 by Rashed Dadou & Grok | 2026</div>
+    </div>
+
+    <script>
+        // تكامل مع Python backend عبر Flask API (افتراضيًا localhost:5000)
+        const API_URL = "http://127.0.0.1:5000";
+
+        const input = document.getElementById('promptInput');
+        const previewText = document.getElementById('previewText');
+        const suggestionsDiv = document.getElementById('suggestions');
+        const output = document.getElementById('output');
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const generateImageBtn = document.getElementById('generateImageBtn');
+        const imageUpload = document.getElementById('imageUpload');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const analysisResult = document.getElementById('analysisResult');
+        const uploadedImage = document.getElementById('uploadedImage');
+        const loadHistoryBtn = document.getElementById('loadHistoryBtn');
+        const historyList = document.getElementById('historyList');
+
+        // معاينة حية (محلية بسيطة)
+        input.addEventListener('input', async () => {
+            const prompt = input.value.trim();
+            if (!prompt) {
+                previewText.textContent = '';
+                suggestionsDiv.innerHTML = '';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/preview`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({prompt})
+                });
+                const data = await res.json();
+                previewText.textContent = data.enhanced_prompt || prompt;
+                suggestionsDiv.innerHTML = data.display_suggestions.length ? 
+                    "<strong>اقتراحات:</strong><br>" + 
+                    data.display_suggestions.map(s => `<div class="suggestion">✔ ${s}</div>`).join('') : '';
+            } catch (e) {
+                previewText.textContent = prompt;
+            }
+        });
+
+        // توليد الـ Prompt النهائي
+        generateBtn.addEventListener('click', async () => {
+            const prompt = input.value.trim();
+            if (!prompt) return;
+
+            try {
+                const res = await fetch(`${API_URL}/enhance`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({prompt})
+                });
+                const data = await res.json();
+                output.innerHTML = `<strong>الـ Prompt المحسن:</strong><br><br>${data.enhanced_prompt}`;
+            } catch (e) {
+                output.innerHTML = "<strong>خطأ في الاتصال بالـ Backend</strong>";
+            }
+        });
+
+        // نسخ النتيجة
+        copyBtn.addEventListener('click', () => {
+            const text = output.textContent || previewText.textContent || input.value;
+            navigator.clipboard.writeText(text.replace(/الـ Prompt المحسن:|\n/g, '').trim());
+            copyBtn.textContent = "✅ تم النسخ!";
+            setTimeout(() => copyBtn.textContent = "📋 نسخ النتيجة", 2000);
+        });
+
+        // توليد صورة عبر Stable Diffusion WebUI
+        generateImageBtn.addEventListener('click', async () => {
+            const prompt = previewText.textContent || input.value;
+            if (!prompt) return;
+
+            try {
+                generateImageBtn.disabled = true;
+                generateImageBtn.textContent = "جاري التوليد...";
+                const res = await fetch(`${API_URL}/generate_image`, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({prompt})
+                });
+                const data = await res.json();
+                if (data.image_url) {
+                    const img = document.createElement('img');
+                    img.src = data.image_url;
+                    img.style.maxWidth = "100%";
+                    img.id = "generatedImage";
+                    output.appendChild(img);
+                }
+                analysisResult.innerHTML = `<strong>ملاحظات التوليد:</strong> ${data.notes || "تم التوليد بنجاح"}`;
+            } catch (e) {
+                analysisResult.innerHTML = "خطأ في توليد الصورة";
+            } finally {
+                generateImageBtn.disabled = false;
+                generateImageBtn.textContent = "🎨 توليد الصورة";
+            }
+        });
+
+        // تحميل وتحليل صورة
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    uploadedImage.src = ev.target.result;
+                    uploadedImage.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        analyzeBtn.addEventListener('click', async () => {
+            const file = imageUpload.files[0];
+            if (!file) {
+                analysisResult.innerHTML = "اختر صورة أولاً";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("image", file);
+
+            try {
+                const res = await fetch(`${API_URL}/analyze_image`, {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+                analysisResult.innerHTML = `<strong>تحليل الصورة:</strong><br>${data.notes}`;
+            } catch (e) {
+                analysisResult.innerHTML = "خطأ في التحليل";
+            }
+        });
+
+        // عرض التاريخ من SQLite
+        loadHistoryBtn.addEventListener('click', async () => {
+            try {
+                const res = await fetch(`${API_URL}/history`);
+                const history = await res.json();
+                if (history.length === 0) {
+                    historyList.innerHTML = "<p>لا يوجد سجل بعد</p>";
+                    return;
+                }
+                historyList.innerHTML = history.map(item => `
+                    <div class="history-item">
+                        <strong>Prompt:</strong> ${item.prompt}<br>
+                        <strong>Enhanced:</strong> ${item.enhanced_prompt}<br>
+                        <strong>الوقت:</strong> ${item.timestamp}<br>
+                        <strong>ملاحظات:</strong> ${item.notes || "لا يوجد"}
+                        ${item.image_path ? `<br><img src="${item.image_path}" style="max-width:100%; margin-top:10px; border-radius:8px;">` : ''}
+                    </div>
+                `).join('');
+            } catch (e) {
+                historyList.innerHTML = "خطأ في تحميل السجل";
+            }
+        });
+
+        // تحميل السجل تلقائيًا عند الفتح
+        loadHistoryBtn.click();
+    </script>
+</body>
+</html>
