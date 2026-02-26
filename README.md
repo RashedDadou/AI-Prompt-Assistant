@@ -1,20 +1,29 @@
 ## AI-Prompt-Assistant ##
 
 🧠 AI Prompt Assistant Pro
+
 An Intelligent Tool for Enhancing AI Image Generation Prompts
 📖 Overview
 AI Prompt Assistant Pro is a full-featured, local application designed to intelligently enhance text prompts for AI image generators such as Stable Diffusion, Midjourney, Flux, and others.
 Key Features:
 
 ✅ Smart Prompt Enhancement with interactive suggestions
+
 ✅ Generated Image Analysis using OpenCV
+
 ✅ SQLite Database for storing prompt history
+
 ✅ Integration with xAI API (Grok) for advanced contextual enhancement
+
 ✅ Modern Web Interface (Flask + HTML + JavaScript)
+
 ✅ Automated Unit Tests with pytest
+
 ✅ Optional Image Generation via Stable Diffusion WebUI
 
+
 🚀 How to Run (Step-by-Step)
+
 1. Install Required Libraries
 Bashpip install flask opencv-python pillow numpy requests
 2. Start the Server
@@ -53,6 +62,7 @@ Launch the WebUI on http://127.0.0.1:7860
 The app will automatically send prompts and retrieve generated images
 
 🎯 How It Works
+
 textUser enters prompt
         ↓
 Intelligent analysis (keyword detection, environment validation)
@@ -66,8 +76,11 @@ Optional: Image generated via Stable Diffusion
 Optional: Generated image analyzed (edges, brightness, element detection)
         ↓
 Everything saved to SQLite history (prompt, enhanced prompt, image, notes)
+
 🧪 Running Tests
+
 Bashpytest test_AIPromptAssistant.py -v
+
 🙏 Acknowledgments
 
 Built with passion by Rashed Dadou
